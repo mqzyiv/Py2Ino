@@ -161,7 +161,7 @@ if len(sys.argv) < 2:
 input_file = sys.argv[1] 
 orig_stdout = sys.stdout
 result = subprocess.run(["mkdir", input_file[:-3]])
-out = open(input_file[:-3]+'/'+input_file[:-2]+'txt', 'w')
+out = open(input_file[:-3]+'/'+input_file[:-2]+'ino', 'w')
 sys.stdout = out
 f = open(input_file, 'r').read()
 tree = ast.parse(f)
