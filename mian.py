@@ -101,7 +101,7 @@ class py2ino(ast.NodeVisitor):
 
   def visit_Call(self, node):
     if isinstance(node.func, ast.Name):
-      if node.func.id in builtin:
+      if node.func.id in builtin or node.func.id in self.functionnames:
         argarr = []
         for i in node.args:
           if isinstance(i,ast.Name):
@@ -144,6 +144,8 @@ class py2ino(ast.NodeVisitor):
               raise Exception(f"pinMode function second argument must be HIGH or LOW--line{node.lineno}")
           arg1 = self.variables[node.args[1].id]
         self.output+= f"digitalWrite({arg0}, {arg1});\n"
+      else:
+        raise Exception(f'Function not defined--line{node.lineno}')
       
 
 

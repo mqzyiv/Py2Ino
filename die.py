@@ -44,8 +44,17 @@ class IDE(tk.Tk):
         self.text.bind("<MouseWheel>", self.update_line_numbers)
         self.text.bind("<Button-1>", self.update_line_numbers)
         
+        self.text.tag_configure("current_line", background="#e9e9e9")
+        self.highlight_line()
         self.update_line_numbers()
+        self.text.tag_remove("highlight", "1.0", "end")
+        self.text.tag_configure("highlight",background="#ff0000")
+    
 
+    def highlight_line(self, interval = 100):
+        self.text.tag_remove("current_line", "1.0", tk.END)
+        self.text.tag_add("current_line", "insert linestart", "insert lineend+1c")
+        self.after(interval, self.highlight_line, interval)
     def update_line_numbers(self, event=None):
         self.line_numbers.redraw()
         self.text.config(yscrollcommand=self.on_scroll)
@@ -56,6 +65,7 @@ class IDE(tk.Tk):
         self.text.bind("<FocusIn>", self.update_line_numbers)
     def run_code(self):
         code = self.text.get("1.0", tk.END)
+        self.text.tag_remove("highlight", "1.0", tk.END)
         try:
             tree = ast.parse(code)
             self.output = mian.start(tree)
@@ -63,6 +73,12 @@ class IDE(tk.Tk):
         except Exception as e:
             self.output_label.config(text="Error: "+str(e))
             self.compbut.pack_forget()
+            if "--line" in str(e):
+                index = str(e).index("--line") + 6
+                line_number  = str(e)[index:]
+                start_index = f"{line_number}.0"
+                end_index = f"{line_number}.0+1lines"
+                self.text.tag_add("highlight", start_index, end_index)
         else:
             self.compbut.pack()
 
