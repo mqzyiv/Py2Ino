@@ -243,9 +243,9 @@ def start(tree):
   if 'loop' not in visitfun.functionnames:
     raise Exception("loop function not found")
   return visitfun.output
-tree = ast.parse(open('blink.txt','r').read())
-o = start(tree)
-print(o)
+# tree = ast.parse(open('blink.txt','r').read())
+# o = start(tree)
+# print(o)
 # if len(sys.argv) < 2:
 #   print('provide an input file')
 #   exit(0)
