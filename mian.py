@@ -1,6 +1,4 @@
 import ast
-import sys
-import subprocess
 # i got lazy :/ 
 builtin  =['abs','constrain','map','max','min','pow','sq','sqrt','bit','bitClear','bitRead','bitSet','bitWrite','highByte',
 'lowByte',
@@ -46,6 +44,7 @@ class py2ino(ast.NodeVisitor):
   def __init__(self):
     self.functionnames = []
     self.variables = {}
+    self.output = ""
   def get_type(self, node):
     if isinstance(node, ast.Name):
         return node.id
@@ -64,12 +63,12 @@ class py2ino(ast.NodeVisitor):
     header += ", ".join(args)
     if (node.returns):
       retval = self.get_type(node.returns)
-      print(f'{retval} {node.name} ({header}) {{')
+      self.output+= f'{retval} {node.name} ({header}) {{\n'
     else:
-      print(f'void {node.name}({header}) {{')
+      self.output+= f'void {node.name}({header}) {{\n'
     for i in node.body:
       self.visit(i)
-    print('}')
+    self.output+= '}\n'
   def valid_Pin(self,node):
       if isinstance(node.args[0],ast.Constant):
           if type(node.args[0].value) != int:
@@ -93,10 +92,10 @@ class py2ino(ast.NodeVisitor):
         value = self.variables[node.value.id]
       if node.targets[0].id in self.variables:
         self.variables[node.targets[0].id] = value
-        print("#check that the types match")
-        print(f"{node.targets[0].id} = {value};")
+        self.output+= "#check that the types match\n"
+        self.output+= f"{node.targets[0].id} = {value};\n"
       else:
-        print(f"{type(value).__name__} {node.targets[0].id} = {value};")
+        self.output+=f"{type(value).__name__} {node.targets[0].id} = {value};\n"
         self.variables[node.targets[0].id] = value
     
 
@@ -109,7 +108,7 @@ class py2ino(ast.NodeVisitor):
             argarr.append(i.id)
           elif isinstance(i, ast.Constant):
             argarr.append(str(i.value))
-        print(f'{node.func.id}({','.join(argarr)});')
+        self.output+=f'{node.func.id}({','.join(argarr)});\n'
       if node.func.id == 'pinMode':
         if len(node.args) != 2:
           raise Exception("pinMode function must have 2 arguments")
@@ -129,7 +128,7 @@ class py2ino(ast.NodeVisitor):
         #another one 
         arg0 = self.valid_Pin(node)
       
-        print(f'pinMode({arg0}, {arg1});')
+        self.output+= f'pinMode({arg0}, {arg1});\n'
       elif node.func.id == 'digitalWrite':
         if len(node.args) != 2:
           raise Exception("digitalWrite function must have 2 arguments")
@@ -144,7 +143,7 @@ class py2ino(ast.NodeVisitor):
           if self.variables[node.args[1].id] not in ['HIGH', 'LOW']:
               raise Exception(f"pinMode function second argument must be HIGH or LOW--line{node.lineno}")
           arg1 = self.variables[node.args[1].id]
-        print(f"digitalWrite({arg0}, {arg1});")
+        self.output+= f"digitalWrite({arg0}, {arg1});\n"
       
 
 
@@ -155,19 +154,20 @@ def start(tree):
     raise Exception("setup function not found")
   if 'loop' not in visitfun.functionnames:
     raise Exception("loop function not found")
-if len(sys.argv) < 2:
-  print('provide an input file')
-  exit(0)
-input_file = sys.argv[1] 
-orig_stdout = sys.stdout
-result = subprocess.run(["mkdir", input_file[:-3]])
-out = open(input_file[:-3]+'/'+input_file[:-2]+'ino', 'w')
-sys.stdout = out
-f = open(input_file, 'r').read()
-tree = ast.parse(f)
-start(tree)
-sys.stdout = orig_stdout
-out.close()
-if len(sys.argv) >=3:
-  if sys.argv[2] == '-c':
-    pass
+  return visitfun.output
+# if len(sys.argv) < 2:
+#   print('provide an input file')
+#   exit(0)
+# input_file = sys.argv[1] 
+# orig_stdout = sys.stdout
+# result = subprocess.run(["mkdir", input_file[:-3]])
+# out = open(input_file[:-3]+'/'+input_file[:-2]+'ino', 'w')
+# sys.stdout = out
+# f = open(input_file, 'r').read()
+# tree = ast.parse(f)
+# start(tree)
+# sys.stdout = orig_stdout
+# out.close()
+# if len(sys.argv) >=3:
+#   if sys.argv[2] == 'c':
+#     pass
