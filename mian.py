@@ -70,14 +70,14 @@ class py2ino(ast.NodeVisitor):
         return TYPE_MAP.get(node.id, node.id)
     return "auto"  # fallback
   def infer_type(self, value):
-    if isinstance(value, int):
-        return "int"
+    if isinstance(value, bool):
+        return "bool"
     elif isinstance(value, float):
         return "float"
     elif isinstance(value, str):
         return "String"
-    elif isinstance(value, bool):
-        return "bool"
+    elif isinstance(value, int):
+        return "int"
     else:
         return "auto"
   def visit_FunctionDef(self, node):
