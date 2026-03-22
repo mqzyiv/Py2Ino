@@ -1,5 +1,47 @@
 import ast
-
+import sys
+import subprocess
+# i got lazy :/ 
+builtin  =['abs','constrain','map','max','min','pow','sq','sqrt','bit','bitClear','bitRead','bitSet','bitWrite','highByte',
+'lowByte',
+'analogRead',
+'analogReadResolution',
+'analogReference',
+'analogWrite',
+'analogWriteResolution',
+'cos',
+'sin',
+'tan',
+'attachInterrupt',
+'detachInterrupt',
+'digitalPinToInterrupt',
+'noTone',
+'pulseIn',
+'pulseInLong',
+'shiftIn',
+'shiftOut',
+'tone',
+'isAlphaNumeric',
+'isAscii',
+'isControl',
+'isDigit',
+'isGraph',
+'isHexadecimalDigit',
+'isLowerCase',
+'isPrintable',
+'isPunct',
+'isSpace',
+'isUpperCase',
+'isWhitespace',
+'interrupts',
+'noInterrupts',
+'delay',
+'delayMicroseconds',
+'micros',
+'millis',
+'random',
+'randomSeed'
+]
 class py2ino(ast.NodeVisitor):
   def __init__(self):
     self.functionnames = []
@@ -60,6 +102,14 @@ class py2ino(ast.NodeVisitor):
 
   def visit_Call(self, node):
     if isinstance(node.func, ast.Name):
+      if node.func.id in builtin:
+        argarr = []
+        for i in node.args:
+          if isinstance(i,ast.Name):
+            argarr.append(i.id)
+          elif isinstance(i, ast.Constant):
+            argarr.append(str(i.value))
+        print(f'{node.func.id}({','.join(argarr)});')
       if node.func.id == 'pinMode':
         if len(node.args) != 2:
           raise Exception("pinMode function must have 2 arguments")
@@ -105,4 +155,19 @@ def start(tree):
     raise Exception("setup function not found")
   if 'loop' not in visitfun.functionnames:
     raise Exception("loop function not found")
-    
+if len(sys.argv) < 2:
+  print('provide an input file')
+  exit(0)
+input_file = sys.argv[1] 
+orig_stdout = sys.stdout
+result = subprocess.run(["mkdir", input_file[:-3]])
+out = open(input_file[:-3]+'/'+input_file[:-2]+'txt', 'w')
+sys.stdout = out
+f = open(input_file, 'r').read()
+tree = ast.parse(f)
+start(tree)
+sys.stdout = orig_stdout
+out.close()
+if len(sys.argv) >=3:
+  if sys.argv[2] == '-c':
+    pass
